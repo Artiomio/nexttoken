@@ -15,7 +15,7 @@ import time
 
 from tqdm import tqdm
 from sparsematrix import SparseMatrix
-
+from enumeratingtokenizer import EnumeratingTokenizer
 
 def clean_html(raw_html):
   cleanr = re.compile('<.*?>')
@@ -46,21 +46,12 @@ tokens_are_words = 1
 markov_dim = 2
 
 if tokens_are_words:
-    #text = clean_html(text)
+    text = clean_html(text)
     text = text.split()
 else:
     text = text.replace("\n", "")
 
     
-class EnumeratingTokenizer:
-    def __init__(self, text):
-        self.text = text
-
-    def tokenize_text_by_enumerating(self):
-        self.unique_symbols = sorted(set(self.text))
-        word_to_tokode = dict([(y, x) for (x, y) in tqdm(enumerate(self.unique_symbols), total=len(self.unique_symbols))])
-        text_digitized = [word_to_tokode[x] for x in tqdm(self.text)]
-        return text_digitized
 
 tknz = EnumeratingTokenizer(text)
 text_digitized = tknz.tokenize_text_by_enumerating()
@@ -82,7 +73,7 @@ chars_in_line = 100
 
 a = np.random.randint(0, len(text_digitized) - markov_dim)
 left = tuple(text_digitized[a: markov_dim + a])
-print("Начинаем генерирование текста")
+print("Начинаем генерирование текста: ", left)
 for i in range(n_tokens_to_generate):
 
     distr = np.array( [prob_matrix[(left + (x, ))] for x in range(0, prob_matrix.shape[0])])
