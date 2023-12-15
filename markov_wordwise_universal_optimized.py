@@ -67,14 +67,16 @@ text_digitized = tknz.tokenize_text_by_enumerating()
 unique_symbols = tknz.unique_symbols
 
 
-def calculate_transition_matrix(text):
+def calculate_transition_matrix(text_digitized, markov_dim):
     prob_matrix = SparseMatrix([len(unique_symbols)] * (markov_dim + 1))
-    for i in tqdm(range(markov_dim, len(text))):
+    for i in tqdm(range(markov_dim, len(text_digitized))):
         n_gram_and_char = tuple(text_digitized[i - markov_dim: i + 1])
         prob_matrix[n_gram_and_char] += 1
     return prob_matrix
 
-prob_matrix = calculate_transition_matrix(text)
+prob_matrix = calculate_transition_matrix(text_digitized, markov_dim)
+
+
 n_tokens_to_generate = 1500
 chars_in_line = 100
 
