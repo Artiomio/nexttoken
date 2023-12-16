@@ -20,7 +20,7 @@ from enumeratingtokenizer import EnumeratingTokenizer
 def clean_html(raw_html):
   cleanr = re.compile('<.*?>')
   cleantext = re.sub(cleanr, '', raw_html)
-  return cleantext.replace("&nbsp;", "")
+  return cleantext.replace("&nbsp;", "").replace("&nbspt", "")
 
 
 def text_brushing(text):
@@ -42,8 +42,8 @@ except:
 #f = open(file_name, "r", encoding="cp1251")
 #text = f.read()
 
-tokens_are_words = 1
-markov_dim = 2
+tokens_are_words = 0
+markov_dim = 1
 
 if tokens_are_words:
     text = clean_html(text)
@@ -54,11 +54,14 @@ else:
     
 
 tknz = EnumeratingTokenizer(text)
-text_digitized = tknz.tokenize_text_by_enumerating()
+text_digitized = tknz.tokenize_text_by_enumerating() # Converting text into a list of integers
 unique_symbols = tknz.unique_symbols
 
 
-def calculate_transition_matrix(text_digitized, markov_dim):
+def calculate_transition_matrix(text_digitized, markov_dim, len_uniques=None):
+    if not len_uniques:
+        len_uniques = max(text_digitized)
+
     prob_matrix = SparseMatrix([len(unique_symbols)] * (markov_dim + 1))
     for i in tqdm(range(markov_dim, len(text_digitized))):
         n_gram_and_char = tuple(text_digitized[i - markov_dim: i + 1])
