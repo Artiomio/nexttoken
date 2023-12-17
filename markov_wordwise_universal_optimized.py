@@ -17,20 +17,21 @@ from tqdm import tqdm
 from sparsematrix import SparseMatrix
 from enumeratingtokenizer import EnumeratingTokenizer
 
+
 def clean_html(raw_html):
-  cleanr = re.compile('<.*?>')
-  cleantext = re.sub(cleanr, '', raw_html)
-  return cleantext.replace("&nbsp;", "").replace("&nbspt", "")
+    cleanr = re.compile("<.*?>")
+    cleantext = re.sub(cleanr, "", raw_html)
+    return cleantext.replace("&nbsp;", "").replace("&nbspt", "")
 
 
 def text_brushing(text):
     text = text.replace("--", "—").replace("\r", "").replace("\n", " \n ")
     return text
 
-url = "http://az.lib.ru/t/twen_m/text_1884_the_adventures_of_huckleberry_finn.shtml"
-#url = "http://www.lib.ru/LINDGREN/malysh.txt_Ascii.txt"
-text = requests.get(url).text
 
+url = "http://az.lib.ru/t/twen_m/text_1884_the_adventures_of_huckleberry_finn.shtml"
+# url = "http://www.lib.ru/LINDGREN/malysh.txt_Ascii.txt"
+text = requests.get(url).text
 
 
 try:
@@ -38,12 +39,12 @@ try:
 except:
     file_name = "warandpeace"
 
-#print(file_name)
-#f = open(file_name, "r", encoding="cp1251")
-#text = f.read()
+# print(file_name)
+# f = open(file_name, "r", encoding="cp1251")
+# text = f.read()
 
 tokens_are_words = 0
-markov_dim = 1
+markov_dim = 3
 
 if tokens_are_words:
     text = clean_html(text)
@@ -51,22 +52,28 @@ if tokens_are_words:
 else:
     text = text.replace("\n", "")
 
-    
 
 tknz = EnumeratingTokenizer(text)
-text_digitized = tknz.tokenize_text_by_enumerating() # Converting text into a list of integers
+text_digitized = (
+    tknz.tokenize_text_by_enumerating()
+)  # Converting text into a list of integers
 unique_symbols = tknz.unique_symbols
 
 
 def calculate_transition_matrix(text_digitized, markov_dim, len_uniques=None):
+    """ markov_dim - Number of tokens to take into account while predicting the next token. The transition
+        matrix dimension is always markov_dim + 1
+    """
     if not len_uniques:
         len_uniques = max(text_digitized)
 
-    prob_matrix = SparseMatrix([len(unique_symbols)] * (markov_dim + 1))
+    prob_matrix = SparseMatrix([len_uniques] * (markov_dim + 1))
     for i in tqdm(range(markov_dim, len(text_digitized))):
-        n_gram_and_char = tuple(text_digitized[i - markov_dim: i + 1])
+        n_gram_and_char = tuple(text_digitized[i - markov_dim : i + 1])
         prob_matrix[n_gram_and_char] += 1
+
     return prob_matrix
+
 
 prob_matrix = calculate_transition_matrix(text_digitized, markov_dim)
 
@@ -75,17 +82,20 @@ n_tokens_to_generate = 1500
 chars_in_line = 100
 
 a = np.random.randint(0, len(text_digitized) - markov_dim)
-left = tuple(text_digitized[a: markov_dim + a])
+left = tuple(text_digitized[a : markov_dim + a])
 print("Начинаем генерирование текста: ", left)
+
 for i in range(n_tokens_to_generate):
+    distr = np.array(
+        [prob_matrix[(left + (x,))] for x in range(0, prob_matrix.shape[0])]
+    )
 
-    distr = np.array( [prob_matrix[(left + (x, ))] for x in range(0, prob_matrix.shape[0])])
+    if not sum(distr):
+        continue
 
-    if not sum(distr): continue
     distr = distr / sum(distr)
     char = np.random.choice(range(prob_matrix.shape[0]), p=distr)
     print(unique_symbols[char], end=" " if tokens_are_words else "", flush=True)
-    if i % 70 == 0: print()
+    if i % 70 == 0:
+        print()
     left = (left + (char,))[1:]
-
-
