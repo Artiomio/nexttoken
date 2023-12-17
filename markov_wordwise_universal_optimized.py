@@ -43,8 +43,8 @@ except:
 # f = open(file_name, "r", encoding="cp1251")
 # text = f.read()
 
-tokens_are_words = 0
-markov_dim = 3
+tokens_are_words = 1
+markov_dim = 2
 
 if tokens_are_words:
     text = clean_html(text)
@@ -85,6 +85,8 @@ a = np.random.randint(0, len(text_digitized) - markov_dim)
 left = tuple(text_digitized[a : markov_dim + a])
 print("Начинаем генерирование текста: ", left)
 
+start = time.time()
+
 for i in range(n_tokens_to_generate):
     distr = np.array(
         [prob_matrix[(left + (x,))] for x in range(0, prob_matrix.shape[0])]
@@ -98,4 +100,6 @@ for i in range(n_tokens_to_generate):
     print(unique_symbols[char], end=" " if tokens_are_words else "", flush=True)
     if i % 70 == 0:
         print()
-    left = (left + (char,))[1:]
+    left = (left + (char,))[1: ]
+
+print(f"\nTime spent: {round(time.time() - start, 4)} sec")
