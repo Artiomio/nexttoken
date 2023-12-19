@@ -43,8 +43,8 @@ except:
 # f = open(file_name, "r", encoding="cp1251")
 # text = f.read()
 
-tokens_are_words = 1
-markov_dim = 2
+tokens_are_words = 0
+markov_dim = 3
 
 if tokens_are_words:
     text = clean_html(text)
@@ -94,6 +94,14 @@ for i in range(n_tokens_to_generate):
 
     if not sum(distr):
         continue
+
+    distr_offset = 100 # Bigger values smooth probability peaks
+    #print(sorted(distr)[-10:])
+    #print(np.std(distr))
+    distr += distr_offset
+    distr[distr <= distr_offset] = 0
+
+
 
     distr = distr / sum(distr)
     char = np.random.choice(range(prob_matrix.shape[0]), p=distr)
