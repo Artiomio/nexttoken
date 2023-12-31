@@ -16,32 +16,26 @@ import time
 from tqdm import tqdm
 from sparsematrix import SparseMatrix
 from enumeratingtokenizer import EnumeratingTokenizer
+from textbrushing import clean_html, text_brushing
 
 
-def clean_html(raw_html):
-    cleanr = re.compile("<.*?>")
-    cleantext = re.sub(cleanr, "", raw_html)
-    return cleantext.replace("&nbsp;", "").replace("&nbspt", "")
-
-
-def text_brushing(text):
-    text = text.replace("--", "—").replace("\r", "").replace("\n", " \n ")
-    return text
-
-
-url = "http://az.lib.ru/t/twen_m/text_1884_the_adventures_of_huckleberry_finn.shtml"
-# url = "http://www.lib.ru/LINDGREN/malysh.txt_Ascii.txt"
-text = requests.get(url).text
 
 
 try:
     file_name = sys.argv[1]
-except:
-    file_name = "warandpeace"
 
-# print(file_name)
-# f = open(file_name, "r", encoding="cp1251")
-# text = f.read()
+    f = open(file_name, "r")
+    text = f.read(100*10**6)
+
+
+except:
+
+    file_name = "warandpeace"
+    url = "http://az.lib.ru/t/twen_m/text_1884_the_adventures_of_huckleberry_finn.shtml"
+    # url = "http://www.lib.ru/LINDGREN/malysh.txt_Ascii.txt"
+    text = requests.get(url).text
+
+
 
 tokens_are_words = 1
 markov_dim = 2
@@ -78,7 +72,10 @@ def calculate_transition_matrix(text_digitized, markov_dim, len_uniques=None):
 prob_matrix = calculate_transition_matrix(text_digitized, markov_dim)
 
 
-n_tokens_to_generate = 1500
+if tokens_are_words:
+    n_tokens_to_generate = 300
+else:
+    n_tokens_to_generate = 1500
 chars_in_line = 100
 
 a = np.random.randint(0, len(text_digitized) - markov_dim)
@@ -95,10 +92,18 @@ for i in range(n_tokens_to_generate):
     if not sum(distr):
         continue
 
+    distr_offset = 0 # Bigger values smoothen probability peaks
+    #print(sorted(distr)[-10:])
+    #print(np.std(distr))
+    distr += distr_offset
+    distr[distr <= distr_offset] = 0
+
+
+
     distr = distr / sum(distr)
     char = np.random.choice(range(prob_matrix.shape[0]), p=distr)
     print(unique_symbols[char], end=" " if tokens_are_words else "", flush=True)
-    if i % 70 == 0:
+    if i % chars_in_line == 0:
         print()
     left = (left + (char,))[1: ]
 
