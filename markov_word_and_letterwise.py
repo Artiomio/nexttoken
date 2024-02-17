@@ -1,3 +1,4 @@
+#! /usr/bin/python3
 # -*- coding: utf-8 -*-
 """markov wordwise with my own sparse matrix.ipynb
 
@@ -25,7 +26,7 @@ try:
     file_name = sys.argv[1]
 
     f = open(file_name, "r")
-    text = f.read(100*10**6)
+    text = f.read(500*10**6)
 
 
 except:
@@ -37,8 +38,14 @@ except:
 
 
 
-tokens_are_words = 1
-markov_dim = 2
+tokens_are_words = 0
+
+try:
+    markov_dim = int(sys.argv[2])
+except:
+    markov_dim = 3
+
+print(f"Next word predicted based on {markov_dim} previous words")
 
 if tokens_are_words:
     text = clean_html(text)
